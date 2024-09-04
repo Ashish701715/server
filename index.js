@@ -1,16 +1,31 @@
-const WebSocket = require('ws');
-const wss = new WebSocket.Server({ port: 8080 });
-wss.on('connection', (ws) => {
-  console.log('new connection');
-  ws.on('message', (message) => {
-    console.log('Received message:', message);
-    wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(message);
-      }
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+
+const app = express();
+const server = http.createServer(app);
+
+const io = new Server(server, {
+    cors: {
+        origin: '*', 
+        methods: ['GET', 'POST'], 
+        credentials: true 
+    }
+});
+
+io.on('connection', (socket) => {
+    console.log('A user connected');
+    
+    socket.on('message', (msg) => {
+        console.log('Message received:', msg);
+        io.emit('message', msg);
     });
-  });
-  ws.on('close', () => {
-    console.log('Client disconnected');
-  });
+
+    socket.on('disconnect', () => {
+        console.log('User disconnected');
+    });
+});
+
+server.listen(3000, () => {
+    console.log('Server is running on port 3000');
 });
